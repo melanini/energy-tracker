@@ -1,9 +1,17 @@
 import OpenAI from 'openai';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-  dangerouslyAllowBrowser: true // Only for demo purposes
-});
+// Lazy initialization of the OpenAI client
+let openaiClient: OpenAI | null = null;
+
+function getOpenAIClient() {
+  if (!openaiClient) {
+    openaiClient = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+      dangerouslyAllowBrowser: true // Only for demo purposes
+    });
+  }
+  return openaiClient;
+}
 
 export async function generateChartExplanation(
   chartType: 'history' | 'correlation' | 'timeBreakdown' | 'summary',
@@ -17,6 +25,7 @@ export async function generateChartExplanation(
   };
 
   try {
+    const openai = getOpenAIClient();
     const completion = await openai.chat.completions.create({
       messages: [
         {

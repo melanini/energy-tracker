@@ -91,17 +91,17 @@ export default function AnalyticsPage() {
           <div className="col-span-1">
             <SummaryMetricsCard 
               timeFrame={timeFrame}
-              startDate={customStartDate}
-              endDate={customEndDate}
+              startDate={customStartDate ?? undefined}
+              endDate={customEndDate ?? undefined}
             />
           </div>
 
           {/* Trend Analysis */}
           <div className="col-span-1 md:col-span-2">
-            <TrendCard 
+            <TrendCard
               timeFrame={timeFrame}
-              startDate={customStartDate}
-              endDate={customEndDate}
+              startDate={customStartDate ?? undefined}
+              endDate={customEndDate ?? undefined}
             />
           </div>
         </div>

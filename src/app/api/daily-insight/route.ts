@@ -1,12 +1,25 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import OpenAI from 'openai';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+export const dynamic = 'force-dynamic';
+
+// Lazy initialization of OpenAI client
+let openaiClient: OpenAI | null = null;
+
+function getOpenAIClient() {
+  if (!openaiClient) {
+    if (!process.env.OPENAI_API_KEY) {
+      throw new Error('OPENAI_API_KEY environment variable is not set');
+    }
+    openaiClient = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
+  }
+  return openaiClient;
+}
 
 // Cache key format: userId:date
 const insightCache = new Map<string, { text: string; explanation: string; confidence: number; generatedAt: Date }>();
@@ -65,6 +78,7 @@ export async function GET(request: Request) {
     }));
 
     // Generate insight using OpenAI
+    const openai = getOpenAIClient();
     const completion = await openai.chat.completions.create({
       model: "gpt-4-turbo-preview",
       messages: [

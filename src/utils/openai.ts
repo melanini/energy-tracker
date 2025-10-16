@@ -1,14 +1,22 @@
 import OpenAI from 'openai';
 
-// Initialize the OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-  // In development, we'll allow browser usage. For production, you should use API routes.
-  dangerouslyAllowBrowser: process.env.NEXT_PUBLIC_APP_ENV === 'development'
-});
+// Lazy initialization of the OpenAI client
+let openaiClient: OpenAI | null = null;
+
+function getOpenAIClient() {
+  if (!openaiClient) {
+    openaiClient = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+      // In development, we'll allow browser usage. For production, you should use API routes.
+      dangerouslyAllowBrowser: process.env.NEXT_PUBLIC_APP_ENV === 'development'
+    });
+  }
+  return openaiClient;
+}
 
 export async function generateInsight(prompt: string): Promise<string> {
   try {
+    const openai = getOpenAIClient();
     const completion = await openai.chat.completions.create({
       messages: [
         {

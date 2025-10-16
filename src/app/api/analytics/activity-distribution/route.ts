@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 
+export const dynamic = 'force-dynamic';
+
 const categoryColors: Record<string, string> = {
   work: '#953599',
   family: '#f5855f',

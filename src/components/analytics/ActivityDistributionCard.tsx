@@ -15,7 +15,8 @@ import {
   Cell,
   PieChart,
   Pie,
-  Legend
+  Legend,
+  PieLabelRenderProps
 } from 'recharts';
 
 interface ActivityData {
@@ -23,6 +24,7 @@ interface ActivityData {
   hours: number;
   icon: string;
   color: string;
+  [key: string]: string | number;  // Add index signature for recharts compatibility
 }
 
 interface ActivityDistributionData {
@@ -112,8 +114,8 @@ export default function ActivityDistributionCard() {
               borderRadius: '8px',
               boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
             }}
-            formatter={(value: number) => [`${value.toFixed(1)} hours`, 'Time Spent']}
-            labelFormatter={(label) => label.charAt(0).toUpperCase() + label.slice(1)}
+            formatter={(value: number, name: string) => [`${value.toFixed(1)} hours`, name || 'Time Spent']}
+            labelFormatter={(label: string) => label.charAt(0).toUpperCase() + label.slice(1)}
           />
           <Bar 
             dataKey="hours" 
@@ -143,9 +145,12 @@ export default function ActivityDistributionCard() {
             cx="50%"
             cy="50%"
             labelLine={false}
-            label={({ category, percent }) => 
-              `${category.charAt(0).toUpperCase() + category.slice(1)}: ${(percent * 100).toFixed(0)}%`
-            }
+            label={(props: PieLabelRenderProps) => {
+              if (!props.payload) return '';
+              const data = props.payload as ActivityData;
+              const percent = typeof props.percent === 'number' ? props.percent : 0;
+              return `${data.category.charAt(0).toUpperCase() + data.category.slice(1)}: ${(percent * 100).toFixed(0)}%`;
+            }}
             outerRadius={80}
             fill="#8884d8"
             dataKey="hours"
@@ -161,15 +166,15 @@ export default function ActivityDistributionCard() {
               borderRadius: '8px',
               boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
             }}
-            formatter={(value: number) => [`${value.toFixed(1)} hours`, 'Time Spent']}
+            formatter={(value: number, name: string) => [`${value.toFixed(1)} hours`, name || 'Time Spent']}
           />
           <Legend 
             verticalAlign="bottom" 
             height={36}
-            formatter={(value, entry) => {
+            formatter={(value: string, entry: any) => {
               // value here is "hours" for all entries, so we use the category from the entry data
-              const activity = data.activities.find(a => a.hours === entry.payload.hours);
-              return activity ? activity.category.charAt(0).toUpperCase() + activity.category.slice(1) : value;
+              const payload = entry.payload as ActivityData;
+              return payload.category.charAt(0).toUpperCase() + payload.category.slice(1);
             }}
           />
         </PieChart>

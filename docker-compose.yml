@@ -1,29 +1,49 @@
 
 services:
+  db:
+    image: postgres:16-alpine
+    container_name: energy-tracker-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: energy
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - app-network
+    restart: unless-stopped
+
   app:
     build:
       context: .
       dockerfile: Dockerfile
+    container_name: energy-tracker-web
+    env_file:
+      - .env
+    environment:
+      # Override DATABASE_URL to point to the db service
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/energy?schema=public
+      NODE_ENV: production
+    depends_on:
+      db:
+        condition: service_healthy
     ports:
       - "3000:3000"
-    environment:
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/energy_tracker
-      - NODE_ENV=production
-    depends_on:
-      - db
+    command: sh -c "npx prisma migrate deploy && npm run start"
+    networks:
+      - app-network
     restart: unless-stopped
 
-  db:
-    image: postgres:16-alpine
-    ports:
-      - "5432:5432"
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=energy_tracker
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    restart: unless-stopped
+networks:
+  app-network:
+    driver: bridge
 
 volumes:
   postgres_data:

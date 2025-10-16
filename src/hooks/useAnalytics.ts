@@ -175,6 +175,8 @@ export function useSummaryMetrics(timeFrame: string, startDate?: Date, endDate?:
     pomodoro_usage_pct: number;
     best_pomodoro_day?: string;
     best_pomodoro_hours?: number;
+    milestone_hydration?: string;
+    milestone_happy?: string;
   } | null>(null);
   const [error, setError] = useState<Error | null>(null);
   const [loading, setLoading] = useState(true);
@@ -199,7 +201,9 @@ export function useSummaryMetrics(timeFrame: string, startDate?: Date, endDate?:
           happy_moments_count: 157,
           pomodoro_usage_pct: 85,
           best_pomodoro_day: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-          best_pomodoro_hours: 6.5
+          best_pomodoro_hours: 6.5,
+          milestone_hydration: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+          milestone_happy: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString()
         });
         setLoading(false);
       } catch (e) {

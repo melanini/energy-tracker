@@ -1,11 +1,67 @@
-.git
-.gitignore
+# Dependencies
 node_modules
-npm-debug.log
-README.md
-.next
+.pnp
+.pnp.js
+
+# Testing
+coverage
+.nyc_output
+
+# Next.js
+.next/
+out/
+
+# Production
+build
+dist
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Local env files
 .env
-.env.*
-docker-compose.yml
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# OS
+.DS_Store
+*.pem
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.env/
+.venv/
+ENV/
+
+# Docker
 Dockerfile
 .dockerignore
+docker-compose.yml
+
+# Git
+.git
+.gitignore
+
+# Prisma
+prisma/*.db
+# Keep migrations in build context for prisma migrate deploy
+
+# Misc
+*.log
+.vercel
