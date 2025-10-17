@@ -1,19 +1,16 @@
-# 🚀 Quick Start Guide - Clerk Authentication
+# 🚀 Quick Start Guide - NextAuth Authentication
 
 ## ⚡ Fast Setup (3 minutes)
 
-### 1. Create Clerk Account
+### 1. Set Up Google OAuth (Optional)
 
-1. Go to [clerk.com](https://clerk.com)
-2. Sign up and create a new application
-3. Name it "EnergyFlow"
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select existing one
+3. Enable Google+ API
+4. Create OAuth 2.0 credentials
+5. Add `http://localhost:3000/api/auth/callback/google` to authorized redirect URIs
 
-### 2. Get API Keys
-
-1. In Clerk Dashboard, go to **API Keys**
-2. Copy your **Publishable Key** and **Secret Key**
-
-### 3. Update .env File
+### 2. Update .env File
 
 Add these to your `.env` file (create if it doesn't exist):
 
@@ -21,38 +18,38 @@ Add these to your `.env` file (create if it doesn't exist):
 # Database (get from Neon)
 DATABASE_URL="your-neon-connection-string-here"
 
-# Clerk Authentication
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="pk_test_xxxxxxxx"
-CLERK_SECRET_KEY="sk_test_xxxxxxxx"
+# NextAuth Configuration
+NEXTAUTH_URL="http://localhost:3000"
+NEXTAUTH_SECRET="your-secret-key-here"
 
-# Optional: Customize URLs
-NEXT_PUBLIC_CLERK_SIGN_IN_URL="/sign-in"
-NEXT_PUBLIC_CLERK_SIGN_UP_URL="/sign-up"
-NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL="/home"
-NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL="/home"
+# Google OAuth (optional)
+GOOGLE_CLIENT_ID="your-google-client-id"
+GOOGLE_CLIENT_SECRET="your-google-client-secret"
 ```
 
-### 4. Configure Clerk
+### 3. Generate NextAuth Secret
 
-1. In Clerk Dashboard → **User & Authentication**
-2. Enable **Email address** and **Password**
-3. Disable any OAuth providers
+Run this command to generate a secure secret:
 
-### 5. Push Database Schema
+```bash
+openssl rand -base64 32
+```
+
+### 4. Push Database Schema
 ```bash
 npx prisma db push
 ```
 
-### 6. Start Development Server
+### 5. Start Development Server
 ```bash
 npm run dev
 ```
 
-### 7. Test It Out!
+### 6. Test It Out!
 
 1. Open [http://localhost:3000](http://localhost:3000)
 2. Click "Get Started"
-3. Create an account with email & password
+3. Sign in with Google OAuth or use credentials provider
 4. You're in! 🎉
 
 ---
@@ -60,27 +57,32 @@ npm run dev
 ## 📁 What Was Created
 
 ### Components & Pages
-- ✅ `/sign-in` - Clerk sign in page
-- ✅ `/sign-up` - Clerk sign up page  
+- ✅ `/auth/signin` - NextAuth sign in page
+- ✅ `/auth/signup` - NextAuth sign up page  
 - ✅ `/home` - Protected dashboard page
 
 ### Configuration
-- ✅ `src/middleware.ts` - Clerk route protection
-- ✅ `src/app/layout.tsx` - ClerkProvider wrapper
+- ✅ `src/middleware.ts` - NextAuth route protection
+- ✅ `src/app/layout.tsx` - NextAuth SessionProvider wrapper
+- ✅ `src/lib/auth.ts` - NextAuth configuration
 
 ### Database Tables (Prisma)
-- ✅ `users` - User accounts (with Clerk ID)
+- ✅ `users` - User accounts
+- ✅ `accounts` - OAuth account connections
+- ✅ `sessions` - User sessions
+- ✅ `verificationTokens` - Email verification
 
 ---
 
 ## 🎯 Key Features
 
-✅ **Email & Password Auth** - Secure authentication via Clerk  
+✅ **Google OAuth Auth** - Secure authentication via Google  
+✅ **Credentials Provider** - Email/password authentication for development  
 ✅ **Email Verification** - Built-in email verification  
 ✅ **Protected Routes** - `/home` requires authentication  
-✅ **User Management** - Clerk Dashboard for admin  
+✅ **Session Management** - JWT-based sessions  
 ✅ **TypeScript Support** - Full type safety  
-✅ **Beautiful UI** - Clean, modern Clerk components  
+✅ **Beautiful UI** - Clean, modern authentication pages  
 ✅ **Mobile First** - Responsive design  
 ✅ **Production Ready** - Enterprise-grade security  
 
@@ -110,7 +112,7 @@ npm run dev
 ## 📖 Full Documentation
 
 For detailed setup, troubleshooting, and production deployment:
-- **`CLERK_SETUP.md`** - Complete Clerk setup guide
+- **`NEXTAUTH_SETUP.md`** - Complete NextAuth setup guide
 - **`DATABASE_SETUP.md`** - Database configuration
 
 ---
@@ -120,9 +122,9 @@ For detailed setup, troubleshooting, and production deployment:
 Before testing, ensure:
 - [ ] Neon database is created (PostgreSQL 17)
 - [ ] `DATABASE_URL` is set in `.env`
-- [ ] Clerk account created
-- [ ] Clerk API keys added to `.env`
-- [ ] Email & password enabled in Clerk Dashboard
+- [ ] `NEXTAUTH_SECRET` is set in `.env`
+- [ ] `NEXTAUTH_URL` is set in `.env`
+- [ ] Google OAuth credentials configured (optional)
 - [ ] Ran `npx prisma db push`
 - [ ] Dev server is running
 
@@ -131,28 +133,34 @@ Before testing, ensure:
 ## 🆘 Common Issues
 
 ### Can't sign in?
-- Check Clerk API keys in `.env`
-- Ensure keys start with `pk_test_` and `sk_test_`
+- Check NextAuth configuration in `.env`
+- Ensure `NEXTAUTH_SECRET` and `NEXTAUTH_URL` are set
 - Restart dev server after changing `.env`
-- Check Clerk Dashboard for user status
+- Check Google OAuth credentials if using Google sign-in
 
 ### Can't access /home?
 - Make sure you're signed in
 - Clear browser cookies
 - Check middleware configuration
-- Verify Clerk is properly configured
+- Verify NextAuth is properly configured
 
 ### Database errors?
 - Verify `DATABASE_URL` is correct
 - Run `npx prisma db push` again
 - Check Neon dashboard for database status
 
+### Google OAuth not working?
+- Verify Google OAuth credentials are correct
+- Check authorized redirect URIs in Google Console
+- Ensure callback URL is: `http://localhost:3000/api/auth/callback/google`
+
 ---
 
 ## 🎉 You're All Set!
 
 Your app now has:
-- Secure email authentication
+- Secure Google OAuth authentication
+- Credentials provider for development
 - Protected routes
 - Beautiful auth pages
 - Full TypeScript support
