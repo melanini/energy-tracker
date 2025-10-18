@@ -1,6 +1,6 @@
 # NextAuth.js Email Authentication Setup Guide
 
-This guide provides complete instructions for setting up and troubleshooting NextAuth.js v4 with magic link email authentication in your EnergyFlow application.
+This guide provides complete instructions for setting up and troubleshooting NextAuth.js v4 with magic link email authentication in your Ryze application.
 
 ## Table of Contents
 1. [Overview](#overview)
@@ -89,7 +89,7 @@ To send magic link emails via Gmail, you need to create an **App Password**.
    - Go to: https://myaccount.google.com/apppasswords
    - Select **Mail** as the app
    - Select **Other (Custom name)** as the device
-   - Enter a name like "EnergyFlow App"
+   - Enter a name like "Ryze App"
    - Click **Generate**
    - **Copy the 16-character password** (it will look like: `abcd efgh ijkl mnop`)
 

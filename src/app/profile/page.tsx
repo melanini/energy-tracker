@@ -2,42 +2,43 @@
 
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { useSession, signOut } from "next-auth/react";
+import { useUser, useClerk } from "@clerk/nextjs";
 import { Home, TrendingUp, BarChart3, User as UserIcon, ChevronRight, ChevronLeft, LogOut, Shield, Mail, Calendar, Clock, Sliders, Watch, CreditCard, Info, Edit2, Save, X, Check, Plus, Trash2, RefreshCw, Eye, FileText, Sparkles, Download, Settings, Key, Bell, Palette, Cpu, Lock, Crown, HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type Section = "main" | "account" | "notifications" | "tracking" | "integrations" | "privacy" | "subscription" | "about";
 
 export default function ProfilePage() {
-  const { data: session } = useSession();
+  const { user } = useUser();
+  const { signOut } = useClerk();
   const [activeSection, setActiveSection] = useState<Section>("main");
   const [editingAccount, setEditingAccount] = useState(false);
   
-  // Account data - use user's name from session or extract from email
-  const defaultName = session?.user?.name || session?.user?.email?.split("@")[0] || "User";
+  // Account data - use user's name from Clerk or extract from email
+  const defaultName = user?.fullName || user?.firstName || user?.emailAddresses[0]?.emailAddress?.split("@")[0] || "User";
   const [displayName, setDisplayName] = useState(defaultName);
   
-  // Update display name when session changes
+  // Update display name when user changes
   useEffect(() => {
-    if (session?.user) {
-      const newName = session.user.name || session.user.email?.split("@")[0] || "User";
+    if (user) {
+      const newName = user.fullName || user.firstName || user.emailAddresses[0]?.emailAddress?.split("@")[0] || "User";
       setDisplayName(newName);
     }
-  }, [session]);
+  }, [user]);
   
-  // Debug: Log session data
-  console.log('Profile - Session data:', session);
+  // Debug: Log user data
+  console.log('Profile - User data:', user);
   console.log('Profile - Default name:', defaultName);
   const [pronouns, setPronouns] = useState("");
   const [birthYear, setBirthYear] = useState("");
   const [country, setCountry] = useState("United States");
-  const email = session?.user?.email || "";
+  const email = user?.emailAddresses[0]?.emailAddress || "";
   const [editingEmail, setEditingEmail] = useState(false);
   const [newEmail, setNewEmail] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
   const [connectedAccounts] = useState({
-    google: false,
-    apple: false
+    google: user?.externalAccounts.some(account => account.provider === 'google') || false,
+    apple: user?.externalAccounts.some(account => account.provider === 'apple') || false
   });
   
   // Notification settings
@@ -81,21 +82,21 @@ export default function ProfilePage() {
   if (activeSection === "main") {
     return (
       <div className="min-h-screen pb-20" style={{ backgroundColor: '#f8f5f2' }}>
-        <header className="bg-white px-4 py-4 border-b border-neutral-200">
+        <header className="bg-white px-3 sm:px-4 py-3 sm:py-4 border-b border-neutral-200">
           <div className="max-w-2xl mx-auto">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               <a href="/home" className="p-1">
-                <ChevronLeft className="h-5 w-5 text-neutral-600" />
+                <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5 text-neutral-600" />
               </a>
               <div>
-                <h1 className="text-xl font-bold text-neutral-800">Profile & Settings</h1>
+                <h1 className="text-lg sm:text-xl font-bold text-neutral-800">Profile & Settings</h1>
                 <p className="text-xs text-neutral-500">Manage your account and preferences</p>
               </div>
             </div>
           </div>
         </header>
 
-        <main className="max-w-2xl mx-auto px-4 py-6 space-y-6">
+        <main className="max-w-2xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6">
           {/* User Profile Card */}
           <Card className="border-neutral-200 shadow-sm">
             <CardContent className="pt-6 pb-6 px-5">
@@ -288,7 +289,7 @@ export default function ProfilePage() {
 
           {/* Sign Out */}
           <button 
-            onClick={() => signOut({ callbackUrl: "/" })}
+            onClick={() => signOut()}
             className="w-full flex items-center justify-center gap-2 p-4 border border-red-200 rounded-lg text-red-600 font-medium hover:bg-red-50 transition-colors"
           >
             <LogOut className="h-5 w-5" />
@@ -298,22 +299,22 @@ export default function ProfilePage() {
 
         {/* Bottom Navigation */}
         <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-neutral-200 z-50">
-          <div className="flex items-center justify-around h-16 px-4 max-w-2xl mx-auto">
-            <a href="/home" className="flex flex-col items-center gap-1 text-neutral-400 hover:text-neutral-600">
-              <Home className="h-5 w-5" />
-              <span className="text-xs">Home</span>
+          <div className="flex items-center justify-around h-14 sm:h-16 px-2 sm:px-4 max-w-2xl mx-auto">
+            <a href="/home" className="flex flex-col items-center gap-1 text-neutral-400 hover:text-neutral-600 min-w-0">
+              <Home className="h-4 w-4 sm:h-5 sm:w-5" />
+              <span className="text-xs truncate">Home</span>
             </a>
-            <a href="/track" className="flex flex-col items-center gap-1 text-neutral-400 hover:text-neutral-600">
-              <TrendingUp className="h-5 w-5" />
-              <span className="text-xs">Track</span>
+            <a href="/track" className="flex flex-col items-center gap-1 text-neutral-400 hover:text-neutral-600 min-w-0">
+              <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5" />
+              <span className="text-xs truncate">Track</span>
             </a>
-            <a href="/analytics" className="flex flex-col items-center gap-1 text-neutral-400 hover:text-neutral-600">
-              <BarChart3 className="h-5 w-5" />
-              <span className="text-xs">Analytics</span>
+            <a href="/analytics" className="flex flex-col items-center gap-1 text-neutral-400 hover:text-neutral-600 min-w-0">
+              <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5" />
+              <span className="text-xs truncate">Analytics</span>
             </a>
-            <div className="flex flex-col items-center gap-1 text-purple-600">
-              <UserIcon className="h-5 w-5" />
-              <span className="text-xs font-medium">Profile</span>
+            <div className="flex flex-col items-center gap-1 text-purple-600 min-w-0">
+              <UserIcon className="h-4 w-4 sm:h-5 sm:w-5" />
+              <span className="text-xs font-medium truncate">Profile</span>
             </div>
           </div>
         </nav>
@@ -324,14 +325,14 @@ export default function ProfilePage() {
   // Detail view (for all other sections)
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#f8f5f2' }}>
-      <header className="bg-white px-4 py-4 border-b border-neutral-200 sticky top-0 z-50">
+      <header className="bg-white px-3 sm:px-4 py-3 sm:py-4 border-b border-neutral-200 sticky top-0 z-50">
         <div className="max-w-2xl mx-auto">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <button onClick={() => setActiveSection("main")} className="p-1">
-              <ChevronLeft className="h-5 w-5 text-neutral-600" />
+              <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5 text-neutral-600" />
             </button>
             <div>
-              <h1 className="text-xl font-bold text-neutral-800">
+              <h1 className="text-lg sm:text-xl font-bold text-neutral-800">
                 {activeSection === "account" && "Personal Information"}
                 {activeSection === "notifications" && "Time & Notifications"}
                 {activeSection === "tracking" && "Tracking Preferences"}
@@ -345,7 +346,7 @@ export default function ProfilePage() {
         </div>
       </header>
 
-      <main className="max-w-2xl mx-auto px-4 py-6 space-y-4 pb-24">
+      <main className="max-w-2xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4 pb-20 sm:pb-24">
         {/* Account Section Content */}
         {activeSection === "account" && (
           <div className="space-y-4">

@@ -124,14 +124,24 @@ export default function TrackPage() {
       const response = await fetch(`/api/check-ins?date=${date.toISOString()}`);
       if (response.ok) {
         const data = await response.json();
-        if (data) {
-          setCheckIn(data);
+        // Get the most recent check-in for the date
+        const latestCheckIn = data && data.length > 0 ? data[data.length - 1] : null;
+        if (latestCheckIn) {
+          setCheckIn(latestCheckIn);
           // Populate form with existing data
-          setSelectedMoods(data.note.split(", "));
-          setStressLevel(data.stress17 ? stressLevels[data.stress17 - 1].label : null);
-          setCognitiveClarity([data.cognitive17]);
-          setPhysicalEnergy([data.physical17]);
-          setTimeEntries(data.timeEntries || []);
+          setSelectedMoods(latestCheckIn.note ? latestCheckIn.note.split(", ") : []);
+          setStressLevel(latestCheckIn.stress17 ? stressLevels[latestCheckIn.stress17 - 1].label : null);
+          setCognitiveClarity([latestCheckIn.cognitive17]);
+          setPhysicalEnergy([latestCheckIn.physical17]);
+          setTimeEntries(latestCheckIn.timeEntries || []);
+        } else {
+          // Reset to defaults if no data found
+          setCheckIn(null);
+          setSelectedMoods([]);
+          setStressLevel(null);
+          setCognitiveClarity([4]);
+          setPhysicalEnergy([4]);
+          setTimeEntries([]);
         }
       }
     } catch (error) {
@@ -139,13 +149,41 @@ export default function TrackPage() {
     }
   };
 
-  const autoSave = () => {
+  const autoSave = async () => {
     if (saveTimeout) {
       clearTimeout(saveTimeout);
     }
     
-    const timeout = setTimeout(() => {
-      handleSubmit();
+    const timeout = setTimeout(async () => {
+      try {
+        // Auto-save without showing alerts
+        const response = await fetch("/api/check-ins", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            window: "track", // Use "track" to distinguish from home check-ins
+            physical17: physicalEnergy[0],
+            cognitive17: cognitiveClarity[0],
+            mood17: null,
+            stress17: stressLevel ? stressLevels.findIndex(s => s.label === stressLevel) + 1 : null,
+            note: `Moods: ${selectedMoods.join(", ")}`,
+            timeEntries,
+            sleepHygiene,
+            customTrackers: customTrackers.map(tracker => ({
+              id: tracker.id,
+              value: tracker.value,
+              type: tracker.unitType
+            })),
+          }),
+        });
+
+        if (response.ok) {
+          // Refresh data to show updated values
+          await fetchCheckInForDate(selectedDate);
+        }
+      } catch (error) {
+        console.error("Error auto-saving track data:", error);
+      }
     }, 1000);
     
     setSaveTimeout(timeout);
@@ -160,7 +198,14 @@ export default function TrackPage() {
         clearTimeout(saveTimeout);
       }
     };
-  }, [selectedMoods, stressLevel, cognitiveClarity, physicalEnergy]);
+  }, [selectedMoods, stressLevel, cognitiveClarity, physicalEnergy, timeEntries]);
+
+  // Set editing mode when user interacts with sliders
+  useEffect(() => {
+    if (cognitiveClarity[0] !== 4 || physicalEnergy[0] !== 4) {
+      setIsEditing(true);
+    }
+  }, [cognitiveClarity, physicalEnergy]);
 
   const getDayName = (date: Date) => {
     return date.toLocaleDateString('en-US', { weekday: 'short' });
@@ -222,7 +267,7 @@ export default function TrackPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            window: "custom",
+            window: "track", // Use "track" to distinguish from home check-ins
             physical17: physicalEnergy[0],
             cognitive17: cognitiveClarity[0],
             mood17: null,
@@ -239,11 +284,17 @@ export default function TrackPage() {
       });
 
       if (response.ok) {
-        // Reset form or show success
+        // Refresh data to show updated values
+        await fetchCheckInForDate(selectedDate);
+        // Show success message
         alert("Tracking saved!");
+      } else {
+        console.error("Failed to save tracking data");
+        alert("Failed to save tracking data. Please try again.");
       }
     } catch (error) {
       console.error("Error saving track data:", error);
+      alert("Error saving tracking data. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -252,19 +303,19 @@ export default function TrackPage() {
   return (
     <div className="min-h-screen pb-20" style={{ backgroundColor: '#f8f5f2' }}>
       {/* Header */}
-      <header className="bg-white px-4 py-4 border-b border-neutral-200">
+      <header className="bg-white px-3 sm:px-4 py-3 sm:py-4 border-b border-neutral-200">
         <div className="max-w-2xl mx-auto">
-          <div className="flex items-center gap-3">
-            <a href="/home" className="p-2 hover:bg-neutral-100 rounded-lg">
-              <ChevronLeft className="h-5 w-5" style={{ color: '#953599' }} />
+          <div className="flex items-center gap-2 sm:gap-3">
+            <a href="/home" className="p-1 sm:p-2 hover:bg-neutral-100 rounded-lg">
+              <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5" style={{ color: '#953599' }} />
             </a>
             <div>
-              <h1 className="text-xl font-bold text-neutral-800">Track Energy</h1>
+              <h1 className="text-lg sm:text-xl font-bold text-neutral-800">Track Energy</h1>
               <p className="text-xs text-neutral-500">Complete snapshot of your state</p>
             </div>
           </div>
 
-          <div className="h-px bg-neutral-200 my-4" />
+          <div className="h-px bg-neutral-200 my-3 sm:my-4" />
 
           {/* Calendar Navigation */}
           <div className="flex items-center justify-between">
@@ -363,7 +414,7 @@ export default function TrackPage() {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-2xl mx-auto px-4 py-6 space-y-6">
+      <main className="max-w-2xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6">
         {/* Time Tracking */}
         <TimeTrackingCard
           customCategories={[]}
@@ -511,14 +562,14 @@ export default function TrackPage() {
                   key={level.label}
                   onClick={() => setStressLevel(level.label)}
                   className={cn(
-                    "px-4 py-3 rounded-xl text-sm font-medium transition-all",
+                    "px-4 py-2 rounded-xl text-sm font-medium transition-all text-black",
                     stressLevel === level.label
                       ? "scale-105 shadow-md"
-                      : "opacity-60 hover:opacity-80"
+                      : "hover:opacity-80"
                   )}
                   style={{
                     backgroundColor: level.color,
-                    color: 'white'
+                    color: 'black !important'
                   }}
                 >
                   <div className="flex flex-col items-center gap-2">
@@ -588,7 +639,7 @@ export default function TrackPage() {
                     value={physicalEnergy}
                     onValueChange={setPhysicalEnergy}
                     min={1}
-                    max={12}
+                    max={7}
                     showValue={true}
                   />
                 </div>
@@ -1246,7 +1297,7 @@ export default function TrackPage() {
         <Button
           onClick={handleSubmit}
           disabled={isSubmitting}
-          className="w-full text-white font-medium text-base h-12 rounded-full shadow-md hover:opacity-90 transition-opacity"
+          className="w-full text-white font-bold text-base h-12 rounded-full shadow-md hover:opacity-90 transition-opacity"
           style={{ backgroundColor: '#953599' }}
         >
           {isSubmitting ? "Saving..." : "Save Energy Snapshot"}
@@ -1255,22 +1306,22 @@ export default function TrackPage() {
 
       {/* Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-neutral-200 z-50">
-        <div className="flex items-center justify-around h-16 px-4">
-          <a href="/home" className="flex flex-col items-center gap-1 text-neutral-400">
-            <Home className="h-5 w-5" />
-            <span className="text-xs">Home</span>
+        <div className="flex items-center justify-around h-14 sm:h-16 px-2 sm:px-4">
+          <a href="/home" className="flex flex-col items-center gap-1 text-neutral-400 min-w-0">
+            <Home className="h-4 w-4 sm:h-5 sm:w-5" />
+            <span className="text-xs truncate">Home</span>
           </a>
-          <button className="flex flex-col items-center gap-1" style={{ color: '#953599' }}>
-            <TrendingUp className="h-5 w-5" />
-            <span className="text-xs font-medium">Track</span>
+          <button className="flex flex-col items-center gap-1 min-w-0" style={{ color: '#953599' }}>
+            <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5" />
+            <span className="text-xs font-medium truncate">Track</span>
           </button>
-          <a href="/analytics" className="flex flex-col items-center gap-1 text-neutral-400">
-            <BarChart3 className="h-5 w-5" />
-            <span className="text-xs">Analytics</span>
+          <a href="/analytics" className="flex flex-col items-center gap-1 text-neutral-400 min-w-0">
+            <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5" />
+            <span className="text-xs truncate">Analytics</span>
           </a>
-          <a href="/profile" className="flex flex-col items-center gap-1 text-neutral-400">
-            <UserIcon className="h-5 w-5" />
-            <span className="text-xs">Profile</span>
+          <a href="/profile" className="flex flex-col items-center gap-1 text-neutral-400 min-w-0">
+            <UserIcon className="h-4 w-4 sm:h-5 sm:w-5" />
+            <span className="text-xs truncate">Profile</span>
           </a>
         </div>
       </nav>

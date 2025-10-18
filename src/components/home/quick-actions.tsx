@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
@@ -18,6 +19,7 @@ export function QuickActions() {
   const [pomodoroDialog, setPomodoroDialog] = useState(false);
   const [happyMomentDialog, setHappyMomentDialog] = useState(false);
   const [pomodoroMinutes, setPomodoroMinutes] = useState(20);
+  const [happyTitle, setHappyTitle] = useState("");
   const [happyNote, setHappyNote] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -42,7 +44,7 @@ export function QuickActions() {
   };
 
   const saveHappyMoment = async () => {
-    if (!happyNote.trim()) return;
+    if (!happyTitle.trim() || !happyNote.trim()) return;
     
     setIsSubmitting(true);
     try {
@@ -50,11 +52,13 @@ export function QuickActions() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          note: happyNote,
-          mood: 7,
+          title: happyTitle.trim(),
+          note: happyNote.trim(),
+          tsUtc: new Date().toISOString(),
         }),
       });
       setHappyMomentDialog(false);
+      setHappyTitle("");
       setHappyNote("");
     } catch (error) {
       console.error("Error saving happy moment:", error);
@@ -132,6 +136,7 @@ export function QuickActions() {
                   variant="outline"
                   className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white border-0"
                   onClick={() => {
+                    setHappyTitle("");
                     setHappyNote("");
                     setHappyMomentDialog(true);
                   }}
@@ -142,6 +147,7 @@ export function QuickActions() {
                   variant="outline"
                   className="flex-1 border-pink-200 hover:border-pink-300 text-pink-600 hover:text-pink-700"
                   onClick={() => {
+                    setHappyTitle("");
                     setHappyNote("");
                     setHappyMomentDialog(true);
                   }}
@@ -158,6 +164,12 @@ export function QuickActions() {
                     </DialogDescription>
                   </DialogHeader>
                   <div className="space-y-4">
+                    <Input
+                      value={happyTitle}
+                      onChange={(e) => setHappyTitle(e.target.value)}
+                      placeholder="Give your moment a title..."
+                      className="w-full"
+                    />
                     <Textarea
                       value={happyNote}
                       onChange={(e) => setHappyNote(e.target.value)}
@@ -166,7 +178,7 @@ export function QuickActions() {
                     />
                     <Button
                       onClick={saveHappyMoment}
-                      disabled={isSubmitting || !happyNote.trim()}
+                      disabled={isSubmitting || !happyTitle.trim() || !happyNote.trim()}
                       className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
                     >
                       {isSubmitting ? "Saving..." : "Save Moment"}

@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { auth } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/prisma';
 import OpenAI from 'openai';
 
@@ -26,12 +25,12 @@ const insightCache = new Map<string, { text: string; explanation: string; confid
 
 export async function GET(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    const userId = session?.user?.id || 'guest';
+    const { userId } = await auth();
+    const userIdString = userId || 'guest';
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const cacheKey = `${userId}:${today.toISOString()}`;
+    const cacheKey = `${userIdString}:${today.toISOString()}`;
 
     // Check cache first
     const cachedInsight = insightCache.get(cacheKey);
@@ -47,8 +46,8 @@ export async function GET(request: Request) {
     };
 
     // If authenticated, filter by userId
-    if (session?.user?.id) {
-      whereClause.userId = session.user.id;
+    if (userId) {
+      whereClause.userId = userId;
     }
 
     // Get check-ins from the last 14 days

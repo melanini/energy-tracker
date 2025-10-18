@@ -45,7 +45,7 @@ This quick start guide will get your authentication system up and running in 5 m
 2. **Generate App Password**:
    - Go to: https://myaccount.google.com/apppasswords
    - Select "Mail" and "Other (Custom name)"
-   - Name it "EnergyFlow"
+   - Name it "Ryze"
    - Click "Generate"
    - **Copy the 16-character password** (remove spaces)
    - Paste it into `EMAIL_SERVER_PASSWORD` in your `.env` file

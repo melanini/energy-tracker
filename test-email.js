@@ -21,7 +21,7 @@ async function main() {
     const info = await transporter.sendMail({
       from: process.env.EMAIL_FROM,
       to: process.env.EMAIL_SERVER_USER, // Send to yourself
-      subject: 'Test Email from EnergyFlow',
+      subject: 'Test Email from Ryze',
       text: 'If you receive this, your email configuration is working!',
     });
 

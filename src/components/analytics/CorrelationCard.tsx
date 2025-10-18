@@ -16,7 +16,8 @@ import {
   Tooltip,
   ResponsiveContainer,
   ReferenceLine,
-  Cell
+  Cell,
+  Legend
 } from 'recharts';
 
 export default function CorrelationCard() {
@@ -65,11 +66,35 @@ export default function CorrelationCard() {
               <BarChart
                 data={data.chartData.datasets[0].data.map((value: number, index: number) => ({
                   name: data.chartData.labels[index],
-                  value: value * 100
+                  value: value, // Keep original value for tooltip
+                  strongPositive: value >= 50 ? value : null,
+                  moderatePositive: value >= 0 && value < 50 ? value : null,
+                  moderateNegative: value >= -50 && value < 0 ? value : null,
+                  strongNegative: value < -50 ? value : null
                 }))}
-                margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+                margin={{ top: 20, right: 20, left: 30, bottom: 60 }}
+                barCategoryGap="0%"
+                barGap="0%"
               >
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e5e5" />
+                <defs>
+                  <linearGradient id="purpleGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#A855F7" />
+                    <stop offset="100%" stopColor="#9333EA" />
+                  </linearGradient>
+                  <linearGradient id="orangeGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#F97316" />
+                    <stop offset="100%" stopColor="#EA580C" />
+                  </linearGradient>
+                  <linearGradient id="pinkGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#EC4899" />
+                    <stop offset="100%" stopColor="#DB2777" />
+                  </linearGradient>
+                  <linearGradient id="lightPurpleGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#C084FC" />
+                    <stop offset="100%" stopColor="#A855F7" />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f3e8ff" />
                 <XAxis
                   dataKey="name"
                   tick={{ fontSize: 12, fill: '#666' }}
@@ -92,20 +117,38 @@ export default function CorrelationCard() {
                   }}
                   formatter={(value: number) => [`${value.toFixed(1)}%`, 'Correlation']}
                 />
-                <ReferenceLine y={0} stroke="#666" />
+                <Legend 
+                  verticalAlign="top" 
+                  height={24}
+                  iconType="rect"
+                  wrapperStyle={{ paddingBottom: '5px', fontSize: '11px' }}
+                  iconSize={10}
+                />
+                <ReferenceLine y={0} stroke="#953599" strokeDasharray="5 5" />
                 <Bar
-                  dataKey="value"
-                  fill="#953599"
-                  className="correlation-bar"
-                  radius={[4, 4, 0, 0]}
-                >
-                  {data.chartData.datasets[0].data.map((value: number, index: number) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={value >= 0 ? '#953599' : '#ba7ebf'}
-                    />
-                  ))}
-                </Bar>
+                  dataKey="strongPositive"
+                  fill="url(#purpleGradient)"
+                  name="Strong Positive"
+                  radius={[10, 10, 0, 0]}
+                />
+                <Bar
+                  dataKey="moderatePositive"
+                  fill="url(#orangeGradient)"
+                  name="Moderate Positive"
+                  radius={[10, 10, 0, 0]}
+                />
+                <Bar
+                  dataKey="moderateNegative"
+                  fill="url(#pinkGradient)"
+                  name="Moderate Negative"
+                  radius={[10, 10, 0, 0]}
+                />
+                <Bar
+                  dataKey="strongNegative"
+                  fill="url(#lightPurpleGradient)"
+                  name="Strong Negative"
+                  radius={[10, 10, 0, 0]}
+                />
               </BarChart>
             </ResponsiveContainer>
           ) : null}
