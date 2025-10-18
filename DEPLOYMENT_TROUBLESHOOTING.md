@@ -1,28 +1,28 @@
-# Authentication Error Troubleshooting Guide
+# Clerk Authentication Error Troubleshooting Guide
 
 ## Error: "Authentication Error: There is a problem with the server configuration"
 
-This error occurs when NextAuth.js cannot properly initialize due to missing or incorrect configuration in production.
+This error occurs when Clerk cannot properly initialize due to missing or incorrect configuration in production.
 
 ## **CRITICAL: Required Environment Variables**
 
 Your production deployment **MUST** have these environment variables set:
 
-### 1. **NEXTAUTH_URL** (CRITICAL)
+### 1. **NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY** (CRITICAL)
 ```bash
-NEXTAUTH_URL="https://yourdomain.com"
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="pk_live_your-publishable-key-here"
 ```
-- Must match your exact production domain
-- Must use HTTPS in production
-- No trailing slash
+- Get from your Clerk dashboard → API Keys
+- Use `pk_live_` for production, `pk_test_` for development
+- Must be publicly accessible
 
-### 2. **NEXTAUTH_SECRET** (CRITICAL)
+### 2. **CLERK_SECRET_KEY** (CRITICAL)
 ```bash
-NEXTAUTH_SECRET="your-generated-secret-here"
+CLERK_SECRET_KEY="sk_live_your-secret-key-here"
 ```
-- Generate with: `openssl rand -base64 32`
-- Must be at least 32 characters
-- Never share this secret
+- Get from your Clerk dashboard → API Keys
+- Use `sk_live_` for production, `sk_test_` for development
+- Keep this secret and never expose it publicly
 
 ### 3. **DATABASE_URL** (CRITICAL)
 ```bash
@@ -31,10 +31,12 @@ DATABASE_URL="postgresql://user:password@host:5432/database_name"
 - Must be accessible from your production environment
 - Test connection before deployment
 
-### 4. **Google OAuth** (if using Google sign-in)
+### 4. **Optional: Custom URLs**
 ```bash
-GOOGLE_CLIENT_ID="your-google-client-id"
-GOOGLE_CLIENT_SECRET="your-google-client-secret"
+NEXT_PUBLIC_CLERK_SIGN_IN_URL="/auth/signin"
+NEXT_PUBLIC_CLERK_SIGN_UP_URL="/auth/signup"
+NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL="/home"
+NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL="/home"
 ```
 
 ## **Step-by-Step Fix**
@@ -45,31 +47,29 @@ Check your deployment platform (Vercel, Netlify, etc.) and ensure ALL required v
 1. Go to your deployment dashboard
 2. Navigate to Environment Variables section
 3. Verify these are set:
-   - `NEXTAUTH_URL`
-   - `NEXTAUTH_SECRET`
+   - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`
+   - `CLERK_SECRET_KEY`
    - `DATABASE_URL`
-   - `GOOGLE_CLIENT_ID` (if using Google)
-   - `GOOGLE_CLIENT_SECRET` (if using Google)
 
-### Step 2: Generate NEXTAUTH_SECRET
-If missing, generate a new secret:
+### Step 2: Get Clerk API Keys
+If missing, get your keys from Clerk:
+
+1. Go to [clerk.com](https://clerk.com) and sign in
+2. Select your application
+3. Go to "API Keys" in the sidebar
+4. Copy your **Publishable Key** and **Secret Key**
+5. Add them to your deployment environment
+
+### Step 3: Use Correct Key Types
+Make sure you're using the right keys for your environment:
 ```bash
-openssl rand -base64 32
-```
-Copy the output and set it as `NEXTAUTH_SECRET` in your deployment environment.
+# For development:
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="pk_test_..."
+CLERK_SECRET_KEY="sk_test_..."
 
-### Step 3: Update NEXTAUTH_URL
-Ensure `NEXTAUTH_URL` matches your exact production domain:
-```bash
-# Correct examples:
-NEXTAUTH_URL="https://myapp.vercel.app"
-NEXTAUTH_URL="https://myapp.netlify.app"
-NEXTAUTH_URL="https://myapp.com"
-
-# Incorrect examples:
-NEXTAUTH_URL="http://myapp.com"  # Must use HTTPS
-NEXTAUTH_URL="https://myapp.com/"  # No trailing slash
-NEXTAUTH_URL="myapp.com"  # Must include protocol
+# For production:
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="pk_live_..."
+CLERK_SECRET_KEY="sk_live_..."
 ```
 
 ### Step 4: Test Database Connection
