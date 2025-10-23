@@ -22,6 +22,7 @@ export async function POST(request: Request) {
         return new NextResponse('Missing required fields: title and tsUtc', { status: 400 });
       }
 
+      
       const happyMoment = await prisma.happyMoment.create({
         data: {
           userId: userId,
