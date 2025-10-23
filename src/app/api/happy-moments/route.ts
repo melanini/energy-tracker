@@ -25,9 +25,9 @@ export async function POST(request: Request) {
       const happyMoment = await prisma.happyMoment.create({
         data: {
           userId: userId,
-          title,
+          title: title,
           tsUtc: new Date(tsUtc),
-          note,
+          note: note,
           mediaRef: null,
         },
       });
