@@ -41,14 +41,14 @@ export default function AnalyticsPage() {
   return (
     <div className="min-h-screen pb-20" style={{ backgroundColor: '#f8f5f2' }}>
       {/* Header */}
-      <header className="bg-white px-4 py-4 border-b border-neutral-200">
+      <header className="bg-white px-3 sm:px-4 py-3 sm:py-4 border-b border-neutral-200">
         <div className="max-w-2xl mx-auto">
-          <div className="flex items-center gap-3">
-            <a href="/home" className="p-2 hover:bg-neutral-100 rounded-lg">
-              <ChevronLeft className="h-5 w-5" style={{ color: '#953599' }} />
+          <div className="flex items-center gap-2 sm:gap-3">
+            <a href="/home" className="p-1 sm:p-2 hover:bg-neutral-100 rounded-lg">
+              <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5" style={{ color: '#953599' }} />
             </a>
             <div>
-              <h1 className="text-xl font-bold text-neutral-800">Analytics</h1>
+              <h1 className="text-lg sm:text-xl font-bold text-neutral-800">Analytics</h1>
               <p className="text-xs text-neutral-500">Insights from your energy data</p>
             </div>
           </div>
@@ -56,7 +56,7 @@ export default function AnalyticsPage() {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-2xl mx-auto px-4 py-6 space-y-6">
+      <main className="max-w-2xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6">
         {/* Time Frame Selector */}
         <TimeFrameSelector onTimeFrameChange={handleTimeFrameChange} />
 
@@ -109,22 +109,22 @@ export default function AnalyticsPage() {
 
       {/* Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-neutral-200 z-50">
-        <div className="flex items-center justify-around h-16 px-4">
-          <a href="/home" className="flex flex-col items-center gap-1 text-neutral-400">
-            <Home className="h-5 w-5" />
-            <span className="text-xs">Home</span>
+        <div className="flex items-center justify-around h-14 sm:h-16 px-2 sm:px-4">
+          <a href="/home" className="flex flex-col items-center gap-1 text-neutral-400 min-w-0">
+            <Home className="h-4 w-4 sm:h-5 sm:w-5" />
+            <span className="text-xs truncate">Home</span>
           </a>
-          <a href="/track" className="flex flex-col items-center gap-1 text-neutral-400">
-            <TrendingUp className="h-5 w-5" />
-            <span className="text-xs">Track</span>
+          <a href="/track" className="flex flex-col items-center gap-1 text-neutral-400 min-w-0">
+            <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5" />
+            <span className="text-xs truncate">Track</span>
           </a>
-          <button className="flex flex-col items-center gap-1" style={{ color: '#953599' }}>
-            <BarChart3 className="h-5 w-5" />
-            <span className="text-xs font-medium">Analytics</span>
+          <button className="flex flex-col items-center gap-1 min-w-0" style={{ color: '#953599' }}>
+            <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5" />
+            <span className="text-xs font-medium truncate">Analytics</span>
           </button>
-          <a href="/profile" className="flex flex-col items-center gap-1 text-neutral-400">
-            <UserIcon className="h-5 w-5" />
-            <span className="text-xs">Profile</span>
+          <a href="/profile" className="flex flex-col items-center gap-1 text-neutral-400 min-w-0">
+            <UserIcon className="h-4 w-4 sm:h-5 sm:w-5" />
+            <span className="text-xs truncate">Profile</span>
           </a>
         </div>
       </nav>

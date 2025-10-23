@@ -2,7 +2,7 @@
 
 ## 🎉 Implementation Complete!
 
-Your EnergyFlow application now has a fully functional email-based magic link authentication system using NextAuth.js v4.
+Your Ryze application now has a fully functional email-based magic link authentication system using NextAuth.js v4.
 
 ---
 

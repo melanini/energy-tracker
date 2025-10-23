@@ -31,11 +31,11 @@ const features = [
 
 export function Features() {
   return (
-    <section id="features" className="py-24 px-4 sm:px-6 lg:px-8 bg-white">
+    <section id="features" className="py-16 sm:py-20 lg:py-24 px-4 sm:px-6 lg:px-8 bg-white">
       <div className="max-w-7xl mx-auto">
         {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-neutral-900">
+        <div className="text-center max-w-3xl mx-auto mb-12 sm:mb-16 space-y-3 sm:space-y-4">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-neutral-900">
             Understand Your Energy at a{" "}
             <span 
               className="bg-clip-text text-transparent"
@@ -44,13 +44,13 @@ export function Features() {
               Glance
             </span>
           </h2>
-          <p className="text-lg text-neutral-600">
+          <p className="text-base sm:text-lg text-neutral-600 px-4">
             Intuitive analytics to help you discover what truly impacts your energy levels
           </p>
         </div>
 
         {/* Features Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           {features.map((feature, index) => {
             const Icon = feature.icon;
             return (
@@ -58,16 +58,16 @@ export function Features() {
                 key={index} 
                 className="border-neutral-200 hover:border-purple-300 transition-all hover:shadow-lg group"
               >
-                <CardContent className="pt-6 space-y-4">
+                <CardContent className="pt-4 sm:pt-6 space-y-3 sm:space-y-4 p-4 sm:p-6">
                   <div 
-                    className="h-12 w-12 rounded-xl flex items-center justify-center transition-all group-hover:scale-110"
+                    className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl flex items-center justify-center transition-all group-hover:scale-110"
                     style={{ 
                       backgroundColor: '#953599'
                     }}
                   >
-                    <Icon className="h-6 w-6 text-white" />
+                    <Icon className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                   </div>
-                  <h3 className="font-semibold text-lg text-neutral-900">
+                  <h3 className="font-semibold text-base sm:text-lg text-neutral-900">
                     {feature.title}
                   </h3>
                   <p className="text-sm text-neutral-600 leading-relaxed">
@@ -80,17 +80,17 @@ export function Features() {
         </div>
 
         {/* How It Works Section */}
-        <div id="how-it-works" className="mt-32">
-          <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-neutral-900">
+        <div id="how-it-works" className="mt-20 sm:mt-24 lg:mt-32">
+          <div className="text-center max-w-3xl mx-auto mb-12 sm:mb-16 space-y-3 sm:space-y-4">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-neutral-900">
               How it works
             </h2>
-            <p className="text-lg text-neutral-600">
+            <p className="text-base sm:text-lg text-neutral-600 px-4">
               Start optimizing your energy in three simple steps
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 max-w-5xl mx-auto">
             {[
               {
                 step: "01",
@@ -108,19 +108,19 @@ export function Features() {
                 description: "Receive personalized insights and recommendations to boost your energy and feel your best."
               }
             ].map((item, index) => (
-              <div key={index} className="text-center space-y-4">
+              <div key={index} className="text-center space-y-3 sm:space-y-4 px-4">
                 <div 
-                  className="inline-flex h-16 w-16 items-center justify-center rounded-full text-white font-bold text-xl"
+                  className="inline-flex h-12 w-12 sm:h-16 sm:w-16 items-center justify-center rounded-full text-white font-bold text-lg sm:text-xl"
                   style={{ 
                     background: 'linear-gradient(135deg, #f5855f 0%, #960047 50%, #953599 100%)' 
                   }}
                 >
                   {item.step}
                 </div>
-                <h3 className="text-xl font-semibold text-neutral-900">
+                <h3 className="text-lg sm:text-xl font-semibold text-neutral-900">
                   {item.title}
                 </h3>
-                <p className="text-neutral-600">
+                <p className="text-sm sm:text-base text-neutral-600 leading-relaxed">
                   {item.description}
                 </p>
               </div>

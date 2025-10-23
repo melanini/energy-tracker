@@ -31,6 +31,9 @@ export async function generateInsight(prompt: string): Promise<string> {
       model: "gpt-3.5-turbo",
     });
 
+    if (!completion.choices || completion.choices.length === 0) {
+      return "Unable to generate insight.";
+    }
     return completion.choices[0].message.content || "Unable to generate insight.";
   } catch (error) {
     console.error('Error generating insight:', error);

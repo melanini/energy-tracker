@@ -54,16 +54,34 @@ export function CheckInModule({ completedCheckins, onCheckInComplete }: CheckInM
       });
 
       if (response.ok) {
+        // Successfully saved - trigger callback to refresh data
         onCheckInComplete();
-        // Reset form
+        // Reset form for next check-in
         setCurrentStep('cognitive');
         setCognitiveClarity([4]);
         setPhysicalEnergy([4]);
+      } else {
+        // Handle API error
+        try {
+          const errorData = await response.json();
+          console.error("API Error:", errorData);
+          alert(`Failed to save check-in: ${errorData.error || 'Unknown error'}`);
+        } catch (parseError) {
+          console.error("Error parsing response:", parseError);
+          alert("Failed to save check-in. Please try again.");
+        }
       }
     } catch (error) {
       console.error("Error submitting check-in:", error);
+      alert("Network error. Please check your connection and try again.");
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleBack = () => {
+    if (currentStep === 'physical') {
+      setCurrentStep('cognitive');
     }
   };
 
@@ -81,14 +99,16 @@ export function CheckInModule({ completedCheckins, onCheckInComplete }: CheckInM
               <div
                 key={i}
                 className={cn(
-                  "w-5 h-5 rounded-full flex items-center justify-center transition-colors",
+                  "w-5 h-5 rounded-full flex items-center justify-center transition-all duration-300",
                   i < completedCheckins 
-                    ? "bg-[#953599] text-white" 
-                    : "bg-neutral-200"
+                    ? "bg-[#953599] text-white shadow-sm" 
+                    : "bg-neutral-200 text-neutral-400"
                 )}
               >
-                {i < completedCheckins && (
+                {i < completedCheckins ? (
                   <Check className="w-3 h-3" />
+                ) : (
+                  <span className="text-xs font-medium">{i + 1}</span>
                 )}
               </div>
             ))}
@@ -141,19 +161,32 @@ export function CheckInModule({ completedCheckins, onCheckInComplete }: CheckInM
           </div>
         </div>
 
-        {/* Submit Button */}
-        <Button
-          onClick={handleSubmit}
-          disabled={isSubmitting}
-          className="w-full text-white font-medium text-sm h-11 rounded-full shadow-sm hover:opacity-90 transition-opacity"
-          style={{ backgroundColor: '#953599' }}
-        >
-          {isSubmitting 
-            ? "Submitting..." 
-            : currentStep === 'cognitive' 
-              ? "Next" 
-              : "Submit Check-in"}
-        </Button>
+        {/* Action Buttons */}
+        <div className="flex gap-3">
+          {currentStep === 'physical' && (
+            <Button
+              onClick={handleBack}
+              variant="outline"
+              className="flex-1 text-sm h-11 rounded-full border-neutral-300 text-neutral-600 hover:bg-neutral-50"
+            >
+              Back
+            </Button>
+          )}
+          <Button
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+            className={`text-white font-medium text-sm h-11 rounded-full shadow-sm hover:opacity-90 transition-opacity ${
+              currentStep === 'physical' ? 'flex-1' : 'w-full'
+            }`}
+            style={{ backgroundColor: '#953599' }}
+          >
+            {isSubmitting 
+              ? "Submitting..." 
+              : currentStep === 'cognitive' 
+                ? "Next" 
+                : "Submit Check-in"}
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );

@@ -2,12 +2,13 @@
 
 import { useEffect, useState, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { useSession } from "next-auth/react";
-import { Home, TrendingUp, BarChart3, User as UserIcon, Plus, Lightbulb, Sun, Timer, Camera, PencilLine } from "lucide-react";
+import { useUser } from "@clerk/nextjs";
+import { Home, TrendingUp, BarChart3, User as UserIcon, Plus, Lightbulb, Sun, Timer, Camera, PencilLine, Heart } from "lucide-react";
 import { CheckInModule } from "@/components/home/check-in-module";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 
 interface CheckIn {
   id: string;
@@ -39,29 +40,77 @@ const DEFAULT_CARDS: CustomCard[] = [
 ];
 
 export default function HomePage() {
-  const { data: session, status } = useSession();
+  const { user, isLoaded } = useUser();
   const [checkIns, setCheckIns] = useState<CheckIn[]>([]);
   const [energyPercentage, setEnergyPercentage] = useState(0);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
+  const [timerDuration, setTimerDuration] = useState(20 * 60); // 20 minutes in seconds
+  const [timeRemaining, setTimeRemaining] = useState(20 * 60); // 20 minutes in seconds
   const [isEditMode, setIsEditMode] = useState(false);
   const [customCards, setCustomCards] = useState<CustomCard[]>(DEFAULT_CARDS);
   const [showCheckIn, setShowCheckIn] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [happyMomentDialog, setHappyMomentDialog] = useState(false);
+  const [happyTitle, setHappyTitle] = useState("");
   const [happyNote, setHappyNote] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [recentMoments, setRecentMoments] = useState<Array<{id: string; title: string; note: string | null; createdAt: string}>>([]);
+  const [isLoadingMoments, setIsLoadingMoments] = useState(true);
   const [recommendation, setRecommendation] = useState<string | null>(null);
   const [isLoadingRecommendation, setIsLoadingRecommendation] = useState(false);
 
   useEffect(() => {
     fetchCheckIns();
+    fetchRecentMoments();
   }, []);
+
+  const fetchRecentMoments = async () => {
+    try {
+      const response = await fetch("/api/happy-moments?limit=3");
+      if (response.ok) {
+        const moments = await response.json();
+        setRecentMoments(moments);
+      }
+    } catch (error) {
+      console.error("Error fetching recent moments:", error);
+    } finally {
+      setIsLoadingMoments(false);
+    }
+  };
 
   useEffect(() => {
     if (checkIns.length > 0) {
       fetchRecommendation();
     }
   }, [checkIns]);
+
+  // Countdown timer effect
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+
+    if (isTimerRunning && timeRemaining > 0) {
+      interval = setInterval(() => {
+        setTimeRemaining((time) => {
+          if (time <= 1) {
+            setIsTimerRunning(false);
+            // Timer completed - could add notification here
+            return 0;
+          }
+          return time - 1;
+        });
+      }, 1000);
+    } else if (!isTimerRunning) {
+      if (interval) {
+        clearInterval(interval);
+      }
+    }
+
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+  }, [isTimerRunning, timeRemaining]);
 
   const fetchCheckIns = async () => {
     try {
@@ -180,6 +229,28 @@ export default function HomePage() {
     return "Low";
   };
 
+  const formatTime = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
+
+  const handleTimerToggle = () => {
+    if (isTimerRunning) {
+      setIsTimerRunning(false);
+    } else {
+      if (timeRemaining === 0) {
+        setTimeRemaining(timerDuration);
+      }
+      setIsTimerRunning(true);
+    }
+  };
+
+  const handleTimerReset = () => {
+    setIsTimerRunning(false);
+    setTimeRemaining(timerDuration);
+  };
+
   const handleCaptureHappyMoment = () => {
     if (fileInputRef.current) {
       fileInputRef.current.click();
@@ -222,10 +293,21 @@ export default function HomePage() {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    // Prompt for title
+    const title = prompt('Give your moment a title:');
+    if (!title || !title.trim()) {
+      // Clear the input if no title provided
+      if (event.target) {
+        event.target.value = '';
+      }
+      return;
+    }
+
     try {
       const formData = new FormData();
       formData.append('photo', file);
       formData.append('tsUtc', new Date().toISOString());
+      formData.append('title', title.trim());
       formData.append('note', 'Happy moment captured!');
 
       const response = await fetch('/api/happy-moments', {
@@ -236,6 +318,9 @@ export default function HomePage() {
       if (!response.ok) {
         throw new Error('Failed to save happy moment');
       }
+
+      // Refresh recent moments
+      fetchRecentMoments();
 
       // Clear the input
       if (event.target) {
@@ -254,7 +339,7 @@ export default function HomePage() {
   const strokeDashoffset = circumference - (energyPercentage / 100) * circumference;
 
   // Show loading state while checking authentication
-  if (status === "loading") {
+  if (!isLoaded) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#f8f5f2' }}>
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
@@ -263,28 +348,28 @@ export default function HomePage() {
   }
 
   // Get user's first name or email
-  const userName = session?.user?.name?.split(" ")[0] || session?.user?.email?.split("@")[0] || "there";
+  const userName = user?.firstName || user?.emailAddresses[0]?.emailAddress?.split("@")[0] || "there";
   
-  // Debug: Log session data
-  console.log('Session data:', session);
+  // Debug: Log user data
+  console.log('User data:', user);
 
   return (
     <div className="min-h-screen pb-20" style={{ backgroundColor: '#f8f5f2' }}>
       {/* Header */}
-      <header className="px-4 pt-6 pb-4" style={{ backgroundColor: '#f8f5f2' }}>
+      <header className="px-3 sm:px-4 pt-4 sm:pt-6 pb-3 sm:pb-4" style={{ backgroundColor: '#f8f5f2' }}>
         <div className="max-w-2xl mx-auto">
-          <h1 className="text-2xl font-bold text-neutral-800">
+          <h1 className="text-xl sm:text-2xl font-bold text-neutral-800">
             {getGreeting()}, {userName}! <span className="inline-block animate-wave">👋</span>
           </h1>
-          <p className="text-sm text-neutral-500 mt-1">{formatDate()}</p>
-          {session?.user?.email && (
-            <p className="text-xs text-neutral-400 mt-1">Signed in as {session.user.email}</p>
+          <p className="text-xs sm:text-sm text-neutral-500 mt-1">{formatDate()}</p>
+          {user?.emailAddresses[0]?.emailAddress && (
+            <p className="text-xs text-neutral-400 mt-1 truncate">Signed in as {user?.emailAddresses[0]?.emailAddress}</p>
           )}
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="max-w-2xl mx-auto px-4 py-6 space-y-4">
+      <main className="max-w-2xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-3 sm:space-y-4">
         {/* Check-in Module */}
         {(() => {
           const today = new Date();
@@ -418,8 +503,8 @@ export default function HomePage() {
                         <Button 
                           variant="outline" 
                           size="sm" 
-                          className="flex-1 text-xs h-8 border-amber-200 text-amber-700 hover:bg-amber-50" 
-                          style={{ borderColor: '#f5855f', color: '#960047' }}
+                          className="flex-1 text-xs h-8" 
+                          style={{ backgroundColor: '#f7eef7', borderColor: 'transparent', color: '#960047' }}
                           onClick={fetchRecommendation}
                         >
                           New Insight
@@ -509,25 +594,76 @@ export default function HomePage() {
           {/* Work Time */}
           <Card className="border-neutral-200 shadow-sm">
             <CardContent className="pt-5 pb-4 px-4">
-              <div className="flex items-center gap-3 mb-3">
+              <div className="flex items-center gap-3 mb-4">
                 <div className="flex items-center justify-center w-12 h-12 rounded-full bg-red-50">
                   <Timer className="h-6 w-6 text-red-500" />
                 </div>
                 <div>
                   <h4 className="font-semibold text-sm text-neutral-800">Work Time</h4>
                   <p className="text-xs text-neutral-500">
-                    Press to start<br />20 min timer
+                    {isTimerRunning ? 'Focus session in progress' : 'Press to start 20 min timer'}
                   </p>
                 </div>
               </div>
-              <Button 
-                className="w-full text-white text-sm h-9 hover:opacity-90 flex items-center justify-center gap-3" 
-                style={{ backgroundColor: '#D84315' }}
-                onClick={() => setIsTimerRunning(!isTimerRunning)}
-              >
-                <Timer className="h-5 w-5" />
-                <span className="font-bold">{isTimerRunning ? 'Stop' : 'Start'}</span>
-              </Button>
+              
+              {/* Timer Display */}
+              <div className="flex flex-col items-center justify-center mb-4">
+                <div className="relative w-20 h-20 mb-3">
+                  <svg className="transform -rotate-90 w-20 h-20">
+                    <circle
+                      cx="40"
+                      cy="40"
+                      r="32"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                      fill="none"
+                      className="text-neutral-200"
+                    />
+                    <circle
+                      cx="40"
+                      cy="40"
+                      r="32"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                      fill="none"
+                      strokeDasharray={2 * Math.PI * 32}
+                      strokeDashoffset={2 * Math.PI * 32 * (1 - (timerDuration - timeRemaining) / timerDuration)}
+                      strokeLinecap="round"
+                      className="text-red-500 transition-all duration-1000"
+                    />
+                  </svg>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-lg font-bold text-neutral-800">
+                      {formatTime(timeRemaining)}
+                    </span>
+                  </div>
+                </div>
+                <div className="text-xs text-neutral-500 text-center">
+                  {isTimerRunning ? 'Stay focused!' : 'Ready to work?'}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Button 
+                  className="w-full text-white text-sm h-9 hover:opacity-90 flex items-center justify-center gap-3" 
+                  style={{ backgroundColor: isTimerRunning ? '#dc2626' : '#D84315' }}
+                  onClick={handleTimerToggle}
+                >
+                  <Timer className="h-5 w-5" />
+                  <span className="font-bold">{isTimerRunning ? 'Pause' : 'Start'}</span>
+                </Button>
+                
+                {timeRemaining < timerDuration && (
+                  <Button 
+                    variant="outline"
+                    className="w-full text-sm h-8 text-neutral-600 border-neutral-300 hover:bg-neutral-50"
+                    onClick={handleTimerReset}
+                  >
+                    Reset Timer
+                  </Button>
+                )}
+              </div>
+              
               <button className="text-xs text-neutral-400 hover:text-neutral-600 mt-2 flex items-center justify-center gap-1 w-full">
                 <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -541,20 +677,54 @@ export default function HomePage() {
           <Card className="border-neutral-200 shadow-sm">
             <CardContent className="pt-5 pb-4 px-4">
               <div className="flex items-center gap-3 mb-3">
-                <div className="flex items-center justify-center w-12 h-12 rounded-full bg-amber-50">
-                  <Sun className="h-6 w-6 text-amber-500" />
+                <div className="flex items-center justify-center w-12 h-12 rounded-full" style={{ backgroundColor: '#fff7e2' }}>
+                  <Heart className="h-6 w-6" style={{ color: '#f2bf3f' }} />
                 </div>
                 <div>
                   <h4 className="font-semibold text-sm text-neutral-800">Happy Collector</h4>
                   <p className="text-xs text-neutral-500">
-                    Press to record<br />happy moment
+                    Capture your<br />happy moments
                   </p>
                 </div>
               </div>
+              
+              {/* Recent Moments Display */}
+              {!isLoadingMoments && (
+                <div className="space-y-2 mb-10">
+                  <h4 className="text-xs font-medium text-neutral-600">Recent Moments</h4>
+                  <div className="space-y-1.5">
+                    {recentMoments.length > 0 ? (
+                      recentMoments.map((moment, index) => (
+                        <div key={moment.id} className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-pink-600">{index + 1}.</span>
+                          <p className="text-xs font-semibold text-neutral-800 truncate">
+                            {moment.title}
+                          </p>
+                        </div>
+                      ))
+                    ) : (
+                      // Placeholder titles when no moments are collected
+                      [
+                        { title: "Start collecting happy moments!", id: "placeholder-1" },
+                        { title: "Your memories await...", id: "placeholder-2" },
+                        { title: "Capture joy in your day", id: "placeholder-3" }
+                      ].map((placeholder, index) => (
+                        <div key={placeholder.id} className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-gray-400">{index + 1}.</span>
+                          <p className="text-xs font-semibold text-gray-500 truncate">
+                            {placeholder.title}
+                          </p>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+
               <div className="flex gap-2">
                 <Button 
                   className="flex-1 text-white text-sm h-9 hover:opacity-90 flex items-center justify-center gap-2" 
-                  style={{ backgroundColor: '#efa12c' }}
+                  style={{ backgroundColor: recentMoments.length === 0 ? '#f2bf3f' : '#ef4444' }}
                   onClick={handleCaptureHappyMoment}
                 >
                   <Camera className="h-4 w-4" />
@@ -562,8 +732,13 @@ export default function HomePage() {
                 </Button>
                 <Button 
                   variant="outline"
-                  className="flex-1 text-sm h-9 hover:opacity-90 flex items-center justify-center gap-2 border-amber-200 text-amber-700" 
-                  onClick={() => setHappyMomentDialog(true)}
+                  className="flex-1 text-sm h-9 hover:opacity-90 flex items-center justify-center gap-2 text-black" 
+                  style={{ borderColor: '#f2bf3f' }}
+                  onClick={() => {
+                    setHappyTitle("");
+                    setHappyNote("");
+                    setHappyMomentDialog(true);
+                  }}
                 >
                   <PencilLine className="h-4 w-4" />
                   <span className="font-bold">Take Note</span>
@@ -601,6 +776,12 @@ export default function HomePage() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
+            <Input
+              value={happyTitle}
+              onChange={(e) => setHappyTitle(e.target.value)}
+              placeholder="Give your moment a title..."
+              className="w-full"
+            />
             <Textarea
               value={happyNote}
               onChange={(e) => setHappyNote(e.target.value)}
@@ -609,27 +790,32 @@ export default function HomePage() {
             />
             <Button
               onClick={async () => {
-                if (!happyNote.trim()) return;
+                if (!happyTitle.trim() || !happyNote.trim()) return;
                 setIsSubmitting(true);
                 try {
                   await fetch("/api/happy-moments", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
-                      note: happyNote,
+                      title: happyTitle.trim(),
+                      note: happyNote.trim(),
                       tsUtc: new Date().toISOString(),
                     }),
                   });
                   setHappyMomentDialog(false);
+                  setHappyTitle("");
                   setHappyNote("");
+                  
+                  // Refresh recent moments
+                  fetchRecentMoments();
                 } catch (error) {
                   console.error("Error saving happy moment:", error);
                 } finally {
                   setIsSubmitting(false);
                 }
               }}
-              disabled={isSubmitting || !happyNote.trim()}
-              className="w-full bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-white"
+              disabled={isSubmitting || !happyTitle.trim() || !happyNote.trim()}
+              className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white"
             >
               {isSubmitting ? "Saving..." : "Save Moment"}
             </Button>
@@ -639,24 +825,25 @@ export default function HomePage() {
 
       {/* Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-neutral-200 z-50">
-        <div className="flex items-center justify-around h-16 px-4">
-          <button className="flex flex-col items-center gap-1" style={{ color: '#953599' }}>
-            <Home className="h-5 w-5" />
-            <span className="text-xs font-medium">Home</span>
+        <div className="flex items-center justify-around h-14 sm:h-16 px-2 sm:px-4">
+          <button className="flex flex-col items-center gap-1 min-w-0" style={{ color: '#953599' }}>
+            <Home className="h-4 w-4 sm:h-5 sm:w-5" />
+            <span className="text-xs font-medium truncate">Home</span>
           </button>
-          <a href="/track" className="flex flex-col items-center gap-1 text-neutral-400">
-            <TrendingUp className="h-5 w-5" />
-            <span className="text-xs">Track</span>
+          <a href="/track" className="flex flex-col items-center gap-1 text-neutral-400 min-w-0">
+            <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5" />
+            <span className="text-xs truncate">Track</span>
           </a>
-          <a href="/analytics" className="flex flex-col items-center gap-1 text-neutral-400">
-            <BarChart3 className="h-5 w-5" />
-            <span className="text-xs">Analytics</span>
+          <a href="/analytics" className="flex flex-col items-center gap-1 text-neutral-400 min-w-0">
+            <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5" />
+            <span className="text-xs truncate">Analytics</span>
           </a>
-          <a href="/profile" className="flex flex-col items-center gap-1 text-neutral-400">
-            <UserIcon className="h-5 w-5" />
-            <span className="text-xs">Profile</span>
+          <a href="/profile" className="flex flex-col items-center gap-1 text-neutral-400 min-w-0">
+            <UserIcon className="h-4 w-4 sm:h-5 sm:w-5" />
+            <span className="text-xs truncate">Profile</span>
           </a>
         </div>
       </nav>
-    </div>);
+    </div>
+  );
 }

@@ -42,37 +42,37 @@ const faqs = [
 
 export function FAQ() {
   return (
-    <section id="faq" className="py-24 px-4 sm:px-6 lg:px-8" style={{ backgroundColor: '#f8f5f2' }}>
+    <section id="faq" className="py-16 sm:py-20 lg:py-24 px-4 sm:px-6 lg:px-8" style={{ backgroundColor: '#f8f5f2' }}>
       <div className="max-w-4xl mx-auto">
         {/* Section Header */}
-        <div className="text-center mb-16 space-y-4">
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-neutral-900">
+        <div className="text-center mb-12 sm:mb-16 space-y-3 sm:space-y-4">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-neutral-900">
             Frequently Asked Questions
           </h2>
-          <p className="text-lg text-neutral-600">
+          <p className="text-base sm:text-lg text-neutral-600 px-4">
             Everything you need to know about Ryze
           </p>
         </div>
 
         {/* FAQ Accordion */}
-        <Accordion type="single" collapsible className="space-y-4">
+        <Accordion type="single" collapsible className="space-y-3 sm:space-y-4">
           {faqs.map((faq, index) => (
             <AccordionItem 
               key={index} 
               value={`item-${index}`}
-              className="bg-white border border-neutral-200 rounded-lg px-6 shadow-sm hover:shadow-md transition-shadow"
+              className="bg-white border border-neutral-200 rounded-lg px-4 sm:px-6 shadow-sm hover:shadow-md transition-shadow"
             >
               <AccordionTrigger 
-                className="text-left font-semibold text-neutral-900 transition-colors"
+                className="text-left font-semibold text-sm sm:text-base text-neutral-900 transition-colors py-4 sm:py-6"
                 style={{ 
                   color: '#1f2937'
                 }}
               >
-                <span className="hover:bg-gradient-to-r hover:from-[#f5855f] hover:to-[#953599] hover:bg-clip-text hover:text-transparent transition-all">
+                <span className="hover:bg-gradient-to-r hover:from-[#f5855f] hover:to-[#953599] hover:bg-clip-text hover:text-transparent transition-all leading-relaxed">
                   {faq.question}
                 </span>
               </AccordionTrigger>
-              <AccordionContent className="text-neutral-600 leading-relaxed">
+              <AccordionContent className="text-sm sm:text-base text-neutral-600 leading-relaxed pb-4 sm:pb-6">
                 {faq.answer}
               </AccordionContent>
             </AccordionItem>

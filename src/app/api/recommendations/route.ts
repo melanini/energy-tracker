@@ -1,7 +1,6 @@
 import { OpenAI } from 'openai';
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { auth } from '@clerk/nextjs/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,8 +21,8 @@ function getOpenAIClient() {
 
 export async function POST(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
+    const { userId } = await auth();
+    if (!userId) {
       return new NextResponse('Unauthorized', { status: 401 });
     }
 

@@ -150,7 +150,49 @@
   display: inline-block;
 }
 
-/* Ensure correlation bar colors are applied */
+/* Force correlation bar colors - remove any default styling */
 .correlation-bar path {
   fill: inherit !important;
+}
+
+/* Override any default recharts colors for correlation bars */
+.recharts-bar .recharts-bar-rectangle {
+  fill: inherit !important;
+}
+
+/* Force remove any black fill colors */
+.recharts-bar-rectangle {
+  fill: inherit !important;
+}
+
+/* Specific targeting for correlation chart */
+.recharts-wrapper .correlation-bar .recharts-bar-rectangle {
+  fill: inherit !important;
+}
+
+/* Nuclear option - override ALL possible selectors */
+.recharts-bar-rectangle,
+.recharts-bar .recharts-bar-rectangle,
+.correlation-bar .recharts-bar-rectangle,
+.recharts-wrapper .recharts-bar-rectangle,
+.recharts-bar-rectangle[fill="black"],
+.recharts-bar-rectangle[fill="#000"],
+.recharts-bar-rectangle[fill="#000000"] {
+  fill: inherit !important;
+}
+
+/* Ensure gradients are applied */
+.recharts-bar-rectangle[fill*="url("] {
+  fill: inherit !important;
+}
+
+/* Force wider bars */
+.recharts-bar-rectangle {
+  width: 80px !important;
+  min-width: 80px !important;
+}
+
+.correlation-bar .recharts-bar-rectangle {
+  width: 80px !important;
+  min-width: 80px !important;
 }

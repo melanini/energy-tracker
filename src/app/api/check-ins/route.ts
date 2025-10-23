@@ -1,13 +1,12 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from '@/lib/auth';
+import { auth } from '@clerk/nextjs/server';
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
+    const { userId } = await auth();
     
     const { searchParams } = new URL(request.url);
     const date = searchParams.get("date");
@@ -28,8 +27,8 @@ export async function GET(request: Request) {
     };
 
     // If authenticated, filter by userId
-    if (session?.user?.id) {
-      whereClause.userId = session.user.id;
+    if (userId) {
+      whereClause.userId = userId;
     }
 
     const checkIns = await prisma.checkIn.findMany({
@@ -58,7 +57,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
+    const { userId } = await auth();
 
     const data = await request.json();
     const { timeEntries = [], ...checkInData } = data;
@@ -77,8 +76,19 @@ export async function POST(request: Request) {
     };
 
     // Add userId if user is authenticated
-    if (session?.user?.id) {
-      checkInCreateData.userId = session.user.id;
+    if (userId) {
+      // First, ensure the user exists in the database
+      await prisma.user.upsert({
+        where: { id: userId },
+        update: {},
+        create: {
+          id: userId,
+          email: null, // Will be updated when we get user info from Clerk
+          name: null,
+        },
+      });
+      
+      checkInCreateData.userId = userId;
     }
 
     const checkIn = await prisma.checkIn.create({
