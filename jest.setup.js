@@ -76,7 +76,7 @@ jest.mock('@/lib/prisma', () => ({
       update: jest.fn(),
       delete: jest.fn(),
     },
-    happyMoment: {
+    happyMoment: { // todo: remove this mock
       findMany: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),

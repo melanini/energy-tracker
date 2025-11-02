@@ -43,16 +43,17 @@ model Session {
 }
 
 model User {
-  id            String         @id @default(cuid())
-  name          String?
-  email         String?        @unique
-  emailVerified DateTime?
-  image         String?
-  accounts      Account[]
-  sessions      Session[]
-  checkIns      CheckIn[]
-  happyMoments  HappyMoment[]
+  id               String            @id @default(cuid())
+  name             String?
+  email            String?           @unique
+  emailVerified    DateTime?
+  image            String?
+  accounts         Account[]
+  sessions         Session[]
+  checkIns         CheckIn[]
+  happyMoments     HappyMoment[]
   pomodoroSessions PomodoroSession[]
+  customTrackers   CustomTracker[]
 }
 
 model VerificationToken {
@@ -65,19 +66,21 @@ model VerificationToken {
 
 // Application Models
 model CheckIn {
-  id          String      @id @default(cuid())
-  userId      String?
-  window      String
-  physical17  Int
-  cognitive17 Int
-  mood17      Int?
-  stress17    Int?
-  note        String
-  tsUtc       DateTime
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  user        User?       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  timeEntries TimeEntry[]
+  id                  String                      @id @default(cuid())
+  userId              String?
+  window              String
+  physical17          Int
+  cognitive17         Int
+  mood17              Int?
+  stress17            Int?
+  note                String
+  tsUtc               DateTime
+  createdAt           DateTime                    @default(now())
+  updatedAt           DateTime                    @updatedAt
+  user                User?                       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  timeEntries         TimeEntry[]
+  sleepHygiene        SleepHygiene?
+  customTrackerValues CheckInCustomTrackerValue[]
 }
 
 model TimeCategory {
@@ -116,9 +119,56 @@ model HappyMoment {
 model PomodoroSession {
   id        String   @id @default(cuid())
   userId    String
-  duration  Int      // Duration in minutes
+  duration  Int // Duration in minutes
   tsUtc     DateTime
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model CustomTracker {
+  id        String               @id @default(cuid())
+  userId    String
+  label     String
+  icon      String
+  unit      String
+  unitType  String // "number" | "scale" | "boolean" | "string"
+  maxValue  Int?
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
+  user      User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  values    CustomTrackerValue[]
+}
+
+model CustomTrackerValue {
+  id        String        @id @default(cuid())
+  trackerId String
+  value     String // Store all types as string for flexibility
+  tsUtc     DateTime
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  tracker   CustomTracker @relation(fields: [trackerId], references: [id], onDelete: Cascade)
+}
+
+model SleepHygiene {
+  id                 String   @id @default(cuid())
+  checkInId          String   @unique
+  consistentSchedule Boolean  @default(false)
+  noScreens          Boolean  @default(false)
+  relaxingRoutine    Boolean  @default(false)
+  optimalEnvironment Boolean  @default(false)
+  noCaffeine         Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  checkIn            CheckIn  @relation(fields: [checkInId], references: [id], onDelete: Cascade)
+}
+
+model CheckInCustomTrackerValue {
+  id        String   @id @default(cuid())
+  checkInId String
+  trackerId String
+  value     String // Store all types as string for flexibility
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  checkIn   CheckIn  @relation(fields: [checkInId], references: [id], onDelete: Cascade)
 }
