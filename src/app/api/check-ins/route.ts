@@ -39,6 +39,8 @@ export async function GET(request: Request) {
             category: true,
           },
         },
+        sleepHygiene: true,
+        customTrackerValues: true,
       },
       orderBy: {
         tsUtc: 'asc',
@@ -60,20 +62,7 @@ export async function POST(request: Request) {
     const { userId } = await auth();
 
     const data = await request.json();
-    const { timeEntries = [], ...checkInData } = data;
-
-    // Create check-in data with userId if authenticated
-    const checkInCreateData: any = {
-      ...checkInData,
-      tsUtc: new Date(),
-      note: checkInData.note || "",
-      timeEntries: {
-        create: timeEntries.map((entry: any) => ({
-          hours: entry.hours,
-          categoryId: entry.categoryId,
-        })),
-      },
-    };
+    const { timeEntries = [], sleepHygiene, customTrackers = [], ...checkInData } = data;
 
     // Add userId if user is authenticated
     if (userId) {
@@ -87,8 +76,43 @@ export async function POST(request: Request) {
           name: null,
         },
       });
-      
-      checkInCreateData.userId = userId;
+    }
+
+    // Create check-in data with userId if authenticated
+    const checkInCreateData: any = {
+      ...checkInData,
+      tsUtc: new Date(),
+      note: checkInData.note || "",
+      ...(userId && { userId }),
+      timeEntries: {
+        create: timeEntries.map((entry: any) => ({
+          hours: entry.hours,
+          categoryId: entry.categoryId,
+        })),
+      },
+    };
+
+    // Add sleep hygiene data if provided
+    if (sleepHygiene) {
+      checkInCreateData.sleepHygiene = {
+        create: {
+          consistentSchedule: sleepHygiene.consistentSchedule || false,
+          noScreens: sleepHygiene.noScreens || false,
+          relaxingRoutine: sleepHygiene.relaxingRoutine || false,
+          optimalEnvironment: sleepHygiene.optimalEnvironment || false,
+          noCaffeine: sleepHygiene.noCaffeine || false,
+        },
+      };
+    }
+
+    // Add custom tracker values if provided
+    if (customTrackers && customTrackers.length > 0) {
+      checkInCreateData.customTrackerValues = {
+        create: customTrackers.map((tracker: any) => ({
+          trackerId: tracker.id,
+          value: String(tracker.value), // Convert to string for storage
+        })),
+      };
     }
 
     const checkIn = await prisma.checkIn.create({
@@ -99,6 +123,8 @@ export async function POST(request: Request) {
             category: true,
           },
         },
+        sleepHygiene: true,
+        customTrackerValues: true,
       },
     });
 

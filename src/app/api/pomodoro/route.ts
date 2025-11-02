@@ -15,12 +15,26 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { duration } = body;
+    const { durationMin, duration } = body;
+
+    // Accept both durationMin (new) and duration (legacy) for backwards compatibility
+    const durationValue = durationMin || duration || 25;
+
+    // Ensure the user exists in the database
+    await prisma.user.upsert({
+      where: { id: userId },
+      update: {},
+      create: {
+        id: userId,
+        email: null,
+        name: null,
+      },
+    });
 
     const pomodoroSession = await prisma.pomodoroSession.create({
       data: {
         userId: userId,
-        duration: duration || 25,
+        duration: durationValue,
         tsUtc: new Date(),
       },
     });
